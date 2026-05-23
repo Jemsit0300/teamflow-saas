@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from apps.core.models import BaseModel
+from django.utils.text import slugify
 
 class Organization(BaseModel):
     owner = models.ForeignKey(
@@ -9,15 +10,21 @@ class Organization(BaseModel):
         related_name='owned_organizations'
     )
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
 
     def __str__(self):
         return self.name
+        
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)  
     
 class Membership(BaseModel):
     class Role(models.TextChoices):
+        OWNER = 'owner', 'Owner'
         ADMIN = 'admin', 'Admin'
         MEMBER = 'member', 'Member'
-        VIEWER = 'viewer', 'Viewer'
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -30,6 +37,7 @@ class Membership(BaseModel):
         related_name='memberships'
     )
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
+    joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta(BaseModel.Meta):
         unique_together = ('user', 'organization')
