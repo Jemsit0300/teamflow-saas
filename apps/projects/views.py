@@ -4,7 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from apps.projects.models import Project
 from apps.projects.serializers import ProjectSerializer, ProjectCreateSerializer
-from apps.core.utils import get_current_org
+from apps.core.utils import get_current_org, log_activity
+from apps.core.models import ActivityLog
 from apps.projects.permissions import IsOrgAdminOrReadOnly
 
 
@@ -16,7 +17,9 @@ class ProjectListCreateView(APIView):
         if not org:
             return Response({"error": "X-Organization-ID header is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        projects = Project.objects.filter(organization=org)
+        projects = Project.objects.filter(organization=org).select_related(
+            'organization'
+        )
 
         status_param = request.query_params.get('status')
         if status_param:
@@ -39,6 +42,13 @@ class ProjectListCreateView(APIView):
         )
         if serializer.is_valid():
             project = serializer.save()
+            log_activity(
+                user=request.user,
+                org=org,
+                action=ActivityLog.Action.PROJECT_CREATED,
+                target=project,
+                metadata={'name': project.name}
+            )
             return Response(ProjectSerializer(project).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

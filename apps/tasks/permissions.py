@@ -37,3 +37,11 @@ class TaskPermission(BasePermission):
             return True
 
         return obj.created_by == request.user
+    
+class IsCommentOwner(BasePermission):
+    message = "You must be the owner of this comment to perform this action."
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True 
+        return obj.user == request.user 

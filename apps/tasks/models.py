@@ -65,7 +65,7 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-    text = models.TextField()
-
+    content = models.TextField()
+    
     def __str__(self):
         return f"{self.user} - {self.task}"

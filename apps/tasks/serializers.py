@@ -1,4 +1,6 @@
+from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from apps.tasks.models import Task, Comment
 from apps.organizations.models import Membership
 
 User = get_user_model()
@@ -84,3 +86,25 @@ class MoveTaskSerializer(serializers.Serializer):
         instance.status = validated_data['status']
         instance.save()
         return instance    
+    
+class CommentSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'user', 'user_email', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['content']
+
+    def create(self, validated_data):
+        task = self.context['task']
+        user = self.context['request'].user
+        return Comment.objects.create(
+            task=task,
+            user=user,
+            **validated_data
+        )

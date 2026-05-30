@@ -21,3 +21,15 @@ def get_current_org(request):
         return None
 
     return organization
+
+
+def log_activity(user, org, action, target=None, metadata={}):
+    from apps.core.models import ActivityLog
+    ActivityLog.objects.create(
+        user=user,
+        organization=org,
+        action=action,
+        target_type=target.__class__.__name__ if target else '',
+        target_id=target.id if target else None,
+        metadata=metadata
+    )

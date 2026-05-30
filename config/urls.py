@@ -7,6 +7,7 @@ urlpatterns = [
     path('api/auth/', include('apps.users.urls')),
     path('api/orgs/', include('apps.organizations.urls')),
     path('api/projects/<slug:project_slug>/tasks/', include('apps.tasks.urls')),
+    path('api/', include('apps.core.urls')),
 
     # API schema and documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
